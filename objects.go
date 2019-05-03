@@ -48,6 +48,7 @@ type plane struct {
 }
 
 func (p plane) rayIntersect(orig, dir vec3) (bool, float64) {
+	return false, 0
 }
 
 func (p plane) normal(_ vec3) vec3 {
