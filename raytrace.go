@@ -33,6 +33,7 @@ func render() {
 		sphere{vec3{-1.0, -1.5, -12}, 2, glass},
 		sphere{vec3{1.5, -0.5, -18}, 3, redRubber},
 		sphere{vec3{7.0, 5.0, -18}, 4, mirror},
+		plane{vec3{-10, -4, -10}, vec3{20, 0, 0}, vec3{0, 0, -20}, ivory},
 	}
 	lights := []light{
 		light{vec3{-20, 20, 20}, 1.5},
