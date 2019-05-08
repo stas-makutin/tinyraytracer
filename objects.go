@@ -2,16 +2,28 @@ package main
 
 import "math"
 
-type rayCatcher interface {
+type geometryObject interface {
 	rayIntersect(orig, dir vec3) (bool, float64)
 	normal(hit vec3) vec3
+}
+
+type rayCatcher interface {
+	geometryObject
 	mat(hit vec3) material
 }
 
+type rayObject struct {
+	geometryObject
+	matSelector meterialSelector
+}
+
+func (o rayObject) mat(hit vec3) material {
+	return o.matSelector.selectMaterial(hit)
+}
+
 type sphere struct {
-	center   vec3
-	radius   float64
-	material material
+	center vec3
+	radius float64
 }
 
 func (s sphere) rayIntersect(orig, dir vec3) (bool, float64) {
@@ -38,13 +50,8 @@ func (s sphere) normal(hit vec3) vec3 {
 	return hit.sub(s.center).normalize()
 }
 
-func (s sphere) mat(_ vec3) material {
-	return s.material
-}
-
 type triangle struct {
 	p1, p2, p3 vec3
-	material   material
 }
 
 // Moller-Trumbore algorithm
@@ -80,13 +87,8 @@ func (t triangle) normal(_ vec3) vec3 {
 	return t.p1.sub(t.p2).cross(t.p1.sub(t.p3)).normalize()
 }
 
-func (t triangle) mat(_ vec3) material {
-	return t.material
-}
-
 type plane struct {
 	p, v1, v2 vec3
-	material  material
 }
 
 /*
@@ -129,6 +131,11 @@ func (p plane) normal(hit vec3) vec3 {
 	return p.v1.cross(p.v2).normalize()
 }
 
-func (p plane) mat(_ vec3) material {
-	return p.material
+func (p plane) mapToUV(point vec3) (u, v float64) {
+	m := point.sub(p.p)
+	l1 := p.v1.norm()
+	l2 := p.v2.norm()
+	u = m.dot(p.v1) / (l1 * l1)
+	v = m.dot(p.v2) / (l2 * l2)
+	return
 }

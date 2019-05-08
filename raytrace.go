@@ -27,13 +27,17 @@ func render() {
 	redRubber := phongMaterial{vec3{0.3, 0.1, 0.1}, albedoCoeff{0.9, 0.1, 0, 0}, 10, 1.0}
 	mirror := phongMaterial{vec3{1.0, 1.0, 1.0}, albedoCoeff{0.0, 10.0, 0.8, 0}, 1425., 1.0}
 	glass := phongMaterial{vec3{0.6, 0.7, 0.8}, albedoCoeff{0.0, 0.5, 0.1, 0.8}, 125., 1.5}
+	white := simpleMaterial{vec3{0.3, 0.3, 0.3}}
+	yellow := simpleMaterial{vec3{0.3, 0.7 * 0.3, 0.3 * 0.3}}
+
+	board := plane{vec3{-10, -4, -10}, vec3{20, 0, 0}, vec3{0, 0, -20}}
 
 	scene := []rayCatcher{
-		sphere{vec3{-3.0, 0.0, -16}, 2, ivory},
-		sphere{vec3{-1.0, -1.5, -12}, 2, glass},
-		sphere{vec3{1.5, -0.5, -18}, 3, redRubber},
-		sphere{vec3{7.0, 5.0, -18}, 4, mirror},
-		plane{vec3{-10, -4, -10}, vec3{20, 0, 0}, vec3{0, 0, -20}, ivory},
+		rayObject{sphere{vec3{-3.0, 0.0, -16}, 2}, simpleMaterialSelector{ivory}},
+		rayObject{sphere{vec3{-1.0, -1.5, -12}, 2}, simpleMaterialSelector{glass}},
+		rayObject{sphere{vec3{1.5, -0.5, -18}, 3}, simpleMaterialSelector{redRubber}},
+		rayObject{sphere{vec3{7.0, 5.0, -18}, 4}, simpleMaterialSelector{mirror}},
+		rayObject{board, checkerboardMaterialSelector{white, yellow, board}},
 	}
 	lights := []light{
 		light{vec3{-20, 20, 20}, 1.5},
@@ -48,20 +52,23 @@ func render() {
 		for i := 0; i < width; i++ {
 			w := float64(width)
 			h := float64(height)
-			x := (2*(float64(i)+0.5)/w - 1) * math.Tan(fov/2.) * w / h
-			y := -(2*(float64(j)+0.5)/h - 1) * math.Tan(fov/2.)
+			dirX := (float64(i) + 0.5) - w/2.
+			dirY := -(float64(j) + 0.5) + h/2. // this flips the image at the same time
+			dirZ := -h / (2. * math.Tan(fov/2.))
 
-			dir := vec3{x, y, -1}.normalize()
+			dir := vec3{dirX, dirY, dirZ}.normalize()
 
 			sceneIntersect := func(orig, dir vec3) (dist float64, hitPoint, normal vec3, mat material) {
 				dist = math.MaxFloat64
 				for _, obj := range scene {
 					intersects, objDist := obj.rayIntersect(orig, dir)
 					if intersects && objDist < dist {
-						dist = objDist
-						hitPoint = orig.add(dir.mul(dist))
-						normal = obj.normal(hitPoint)
+						hitPoint = orig.add(dir.mul(objDist))
 						mat = obj.mat(hitPoint)
+						if mat != nil {
+							dist = objDist
+							normal = obj.normal(hitPoint)
+						}
 					}
 				}
 				return
