@@ -24,7 +24,7 @@ type checkerboardMaterialSelector struct {
 
 func (s checkerboardMaterialSelector) selectMaterial(point vec3) material {
 	u, v := s.mapper.mapToUV(point)
-	if (int(10*u+100)+int(10*v))&1 != 0 {
+	if (int(10*u)+int(10*v))&1 != 0 {
 		return s.material1
 	}
 	return s.material2
