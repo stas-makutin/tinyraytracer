@@ -20,6 +20,16 @@ func clip(x float64) float64 {
 }
 
 func render() {
+	envMapFile, err := os.Open("envmap.png")
+	envMap := image.Image(nil)
+	if err == nil {
+		loadEnvMap := func() {
+			defer envMapFile.Close()
+			envMap, _, _ = image.Decode(envMapFile)
+		}
+		loadEnvMap()
+	}
+
 	var width, height int = 1024, 768
 	var framebuffer = make([]vec3, width*height)
 
@@ -47,6 +57,8 @@ func render() {
 
 	fov := 60 * math.Pi / 180
 	orig := vec3{0, 0, 0}
+	polar := vec3{0, 1, 0}
+	equator := vec3{-1, 0, 0}
 
 	for j := 0; j < height; j++ {
 		for i := 0; i < width; i++ {
@@ -79,7 +91,15 @@ func render() {
 				dist, hitPoint, normal, mat := sceneIntersect(orig, dir)
 
 				if depth > 4 || dist >= 1000 {
-					color = vec3{0.2, 0.7, 0.8}
+					if envMap == nil {
+						color = vec3{0.2, 0.7, 0.8}
+					} else {
+						u, v := uvMapSphere(polar, equator, dir)
+						tx := int(float64(envMap.Bounds().Size().X) * (1 - u))
+						ty := int(float64(envMap.Bounds().Size().Y) * (1 - v))
+						r, g, b, _ := envMap.At(tx, ty).RGBA()
+						color = vec3{float64(r) / float64(0xffff), float64(g) / float64(0xffff), float64(b) / float64(0xffff)}
+					}
 					return
 				}
 

@@ -1,9 +1,5 @@
 package main
 
-type uvMapper interface {
-	mapToUV(point vec3) (u, v float64)
-}
-
 type meterialSelector interface {
 	selectMaterial(point vec3) material
 }

@@ -2,6 +2,10 @@ package main
 
 import "math"
 
+type uvMapper interface {
+	mapToUV(point vec3) (u, v float64)
+}
+
 type geometryObject interface {
 	rayIntersect(orig, dir vec3) (bool, float64)
 	normal(hit vec3) vec3
@@ -50,6 +54,17 @@ func (s sphere) normal(hit vec3) vec3 {
 	return hit.sub(s.center).normalize()
 }
 
+func uvMapSphere(polar, equator, normal vec3) (u, v float64) {
+	a := math.Acos(-normal.dot(polar))
+	b := math.Acos(normal.dot(equator)/math.Sin(a)) / (2 * math.Pi)
+	v = a / math.Pi
+	u = b
+	if polar.cross(equator).dot(normal) <= 0 {
+		u = 1 - u
+	}
+	return
+}
+
 type triangle struct {
 	p1, p2, p3 vec3
 }
@@ -85,6 +100,17 @@ func (t triangle) rayIntersect(orig, dir vec3) (bool, float64) {
 
 func (t triangle) normal(_ vec3) vec3 {
 	return t.p1.sub(t.p2).cross(t.p1.sub(t.p3)).normalize()
+}
+
+func (t triangle) mapToUV(point vec3) (u, v float64) {
+	v1 := t.p2.sub(t.p1)
+	v2 := t.p3.sub(t.p1)
+	m := point.sub(t.p1)
+	l1 := v1.norm()
+	l2 := v2.norm()
+	u = m.dot(v1) / (l1 * l1)
+	v = m.dot(v2) / (l2 * l2)
+	return
 }
 
 type plane struct {
